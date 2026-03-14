@@ -41,6 +41,32 @@ type CommentRow = {
   profile: { name: string | null } | null;
 };
 
+const normalizeProfile = (
+  profile:
+    | { name: string | null }
+    | ({ name: string | null } | null)[]
+    | null
+) => {
+  if (!profile) return null;
+  if (Array.isArray(profile)) {
+    return profile.find((item) => item !== null) ?? null;
+  }
+  return profile;
+};
+
+const normalizeUser = (
+  user:
+    | { name: string | null }
+    | ({ name: string | null } | null)[]
+    | null
+) => {
+  if (!user) return null;
+  if (Array.isArray(user)) {
+    return user.find((item) => item !== null) ?? null;
+  }
+  return user;
+};
+
 export default function DocumentViewerPage() {
   const router = useRouter();
   const params = useParams();
@@ -130,9 +156,31 @@ export default function DocumentViewerPage() {
 
         if (isMounted) {
           setDoc(docData);
-          setComments(commentsData ?? []);
+          const normalizedComments: CommentRow[] = (commentsData ?? []).map(
+            (comment) => ({
+              ...comment,
+              profile: normalizeProfile(
+                comment.profile as
+                  | { name: string | null }
+                  | ({ name: string | null } | null)[]
+                  | null
+              ),
+            })
+          );
+          setComments(normalizedComments);
           setAnnotations((annotationsData ?? []) as Annotation[]);
-          setNoteAnnotations((noteData ?? []) as MarkerAnnotation[]);
+          const normalizedNotes: MarkerAnnotation[] = (noteData ?? []).map(
+            (note) => ({
+              ...note,
+              user: normalizeUser(
+                note.user as
+                  | { name: string | null }
+                  | ({ name: string | null } | null)[]
+                  | null
+              ),
+            })
+          );
+          setNoteAnnotations(normalizedNotes);
         }
 
         if (docData.file_url) {
@@ -261,7 +309,20 @@ export default function DocumentViewerPage() {
         throw insertError;
       }
 
-      setComments((prev) => (inserted ? [inserted, ...prev] : prev));
+      const normalizedInserted = inserted
+        ? {
+            ...inserted,
+            profile: normalizeProfile(
+              inserted.profile as
+                | { name: string | null }
+                | ({ name: string | null } | null)[]
+                | null
+            ),
+          }
+        : null;
+      setComments((prev) =>
+        normalizedInserted ? [normalizedInserted, ...prev] : prev
+      );
       setNewComment("");
       toast.success("Comment added");
     } catch (err) {
@@ -386,8 +447,19 @@ export default function DocumentViewerPage() {
       return;
     }
 
+    const normalizedInsertedNote = inserted
+      ? {
+          ...inserted,
+          user: normalizeUser(
+            inserted.user as
+              | { name: string | null }
+              | ({ name: string | null } | null)[]
+              | null
+          ),
+        }
+      : null;
     setNoteAnnotations((prev) =>
-      inserted ? [inserted as MarkerAnnotation, ...prev] : prev
+      normalizedInsertedNote ? [normalizedInsertedNote, ...prev] : prev
     );
     setNoteDraft(null);
     setNoteText("");
