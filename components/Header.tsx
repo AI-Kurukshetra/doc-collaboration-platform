@@ -11,7 +11,7 @@ type HeaderUser = {
   email: string | null;
 };
 
-const HIDE_ON_PATHS = new Set(["/login", "/signup"]);
+const HIDE_ON_PATHS = new Set(["/", "/login", "/signup"]);
 
 export default function Header() {
   const router = useRouter();
