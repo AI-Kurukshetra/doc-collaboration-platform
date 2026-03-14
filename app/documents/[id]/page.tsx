@@ -41,6 +41,21 @@ type CommentRow = {
   profile: { name: string | null } | null;
 };
 
+type ProfileJoin =
+  | { name: string | null }
+  | ({ name: string | null } | null)[]
+  | null;
+
+type RawCommentRow = Omit<CommentRow, "profile"> & { profile: ProfileJoin };
+
+type RawNoteRow = {
+  id: string;
+  content: string | null;
+  position: MarkerAnnotation["position"];
+  created_at: string;
+  user: ProfileJoin;
+};
+
 const normalizeProfile = (
   profile:
     | { name: string | null }
@@ -156,30 +171,20 @@ export default function DocumentViewerPage() {
 
         if (isMounted) {
           setDoc(docData);
-          const normalizedComments: CommentRow[] = (commentsData ?? []).map(
-            (comment) => ({
-              ...comment,
-              profile: normalizeProfile(
-                comment.profile as
-                  | { name: string | null }
-                  | ({ name: string | null } | null)[]
-                  | null
-              ),
-            })
-          );
+          const normalizedComments: CommentRow[] = (
+            (commentsData ?? []) as RawCommentRow[]
+          ).map((comment) => ({
+            ...comment,
+            profile: normalizeProfile(comment.profile),
+          }));
           setComments(normalizedComments);
           setAnnotations((annotationsData ?? []) as Annotation[]);
-          const normalizedNotes: MarkerAnnotation[] = (noteData ?? []).map(
-            (note) => ({
-              ...note,
-              user: normalizeUser(
-                note.user as
-                  | { name: string | null }
-                  | ({ name: string | null } | null)[]
-                  | null
-              ),
-            })
-          );
+          const normalizedNotes: MarkerAnnotation[] = (
+            (noteData ?? []) as RawNoteRow[]
+          ).map((note) => ({
+            ...note,
+            user: normalizeUser(note.user),
+          }));
           setNoteAnnotations(normalizedNotes);
         }
 
@@ -309,15 +314,11 @@ export default function DocumentViewerPage() {
         throw insertError;
       }
 
-      const normalizedInserted = inserted
+      const typedInserted = inserted as RawCommentRow | null;
+      const normalizedInserted = typedInserted
         ? {
-            ...inserted,
-            profile: normalizeProfile(
-              inserted.profile as
-                | { name: string | null }
-                | ({ name: string | null } | null)[]
-                | null
-            ),
+            ...typedInserted,
+            profile: normalizeProfile(typedInserted.profile),
           }
         : null;
       setComments((prev) =>
@@ -447,15 +448,11 @@ export default function DocumentViewerPage() {
       return;
     }
 
-    const normalizedInsertedNote = inserted
+    const typedInsertedNote = inserted as RawNoteRow | null;
+    const normalizedInsertedNote = typedInsertedNote
       ? {
-          ...inserted,
-          user: normalizeUser(
-            inserted.user as
-              | { name: string | null }
-              | ({ name: string | null } | null)[]
-              | null
-          ),
+          ...typedInsertedNote,
+          user: normalizeUser(typedInsertedNote.user),
         }
       : null;
     setNoteAnnotations((prev) =>

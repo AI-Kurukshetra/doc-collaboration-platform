@@ -71,7 +71,10 @@ export default function DocumentsPage() {
             .select("classroom_id")
             .eq("user_id", user.id);
           if (memberError) throw memberError;
-          const classroomIds = memberRows?.map((row) => row.classroom_id) ?? [];
+          const classroomIds =
+            (memberRows as { classroom_id: string }[] | null)?.map(
+              (row) => row.classroom_id
+            ) ?? [];
           if (classroomIds.length) {
             const { data: docRows, error: docsError } = await supabase
               .from("documents")
@@ -92,8 +95,11 @@ export default function DocumentsPage() {
               .from("classrooms")
               .select("id, name")
               .in("id", classroomIds);
+            const typedClassroomRows =
+              (classroomRows as { id: string; name: string | null }[] | null) ??
+              [];
             const nameMap = new Map(
-              (classroomRows ?? []).map((row) => [row.id, row.name])
+              typedClassroomRows.map((row) => [row.id, row.name])
             );
             docs = docs.map((doc) => ({
               ...doc,

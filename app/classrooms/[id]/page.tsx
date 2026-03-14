@@ -140,7 +140,8 @@ export default function ClassroomDetailPage() {
           throw membersError;
         }
 
-        const memberIds = membersData?.map((row) => row.user_id) ?? [];
+        const memberIds =
+          (membersData as MemberRow[] | null)?.map((row) => row.user_id) ?? [];
         const { data: memberProfiles } = memberIds.length
           ? await supabase
               .from("profiles")
@@ -152,10 +153,11 @@ export default function ClassroomDetailPage() {
           .from("roles")
           .select("id, name");
 
-        const studentRole = roleData?.find((role) => role.name === "student");
+        const typedRoles = (roleData as RoleRecord[] | null) ?? [];
+        const studentRole = typedRoles.find((role) => role.name === "student");
         const studentRoleValue = studentRole?.id ?? null;
         const teacherRoleValue =
-          roleData?.find((role) => role.name === "teacher")?.id ?? null;
+          typedRoles.find((role) => role.name === "teacher")?.id ?? null;
 
         const { data: docsData, error: docsError } = await supabase
           .from("documents")
@@ -340,9 +342,13 @@ export default function ClassroomDetailPage() {
       .in("id", studentIds);
 
     if (memberProfiles) {
+      const typedProfiles = memberProfiles as ProfileRecord[];
       setMembers((prev) => {
         const existing = new Set(prev.map((member) => member.id));
-        return [...prev, ...memberProfiles.filter((m) => !existing.has(m.id))];
+        return [
+          ...prev,
+          ...typedProfiles.filter((profile) => !existing.has(profile.id)),
+        ];
       });
     }
 

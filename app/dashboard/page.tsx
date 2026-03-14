@@ -151,7 +151,10 @@ export default function DashboardPage() {
             throw memberError;
           }
 
-          const classroomIds = memberRows?.map((row) => row.classroom_id) ?? [];
+          const classroomIds =
+            (memberRows as { classroom_id: string }[] | null)?.map(
+              (row) => row.classroom_id
+            ) ?? [];
           classroomCount = classroomIds.length;
 
           if (classroomIds.length) {
@@ -185,8 +188,11 @@ export default function DashboardPage() {
               .select("id, name")
               .in("id", classroomIdsForRecent);
 
+            const typedClassroomRows =
+              (classroomRows as { id: string; name: string | null }[] | null) ??
+              [];
             const nameMap = new Map(
-              (classroomRows ?? []).map((row) => [row.id, row.name])
+              typedClassroomRows.map((row) => [row.id, row.name])
             );
 
             recentWithNames = recent.map((doc) => ({

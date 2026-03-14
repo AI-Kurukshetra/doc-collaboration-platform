@@ -66,7 +66,9 @@ export default function StudentsPage() {
         if (classroomsError) throw classroomsError;
 
         const classroomIds =
-          teacherClassrooms?.map((row) => row.id) ?? [];
+          (teacherClassrooms as { id: string }[] | null)?.map(
+            (row) => row.id
+          ) ?? [];
         if (!classroomIds.length) {
           if (isMounted) setStudents([]);
           return;
@@ -75,8 +77,10 @@ export default function StudentsPage() {
         const { data: roleRows } = await supabase
           .from("roles")
           .select("id, name");
+        const typedRoleRows =
+          (roleRows as { id: string; name: string | null }[] | null) ?? [];
         const studentRoleId =
-          roleRows?.find((role) => role.name === "student")?.id ?? null;
+          typedRoleRows.find((role) => role.name === "student")?.id ?? null;
 
         const { data: memberRows, error: memberError } = await supabase
           .from("classroom_members")
@@ -85,9 +89,12 @@ export default function StudentsPage() {
 
         if (memberError) throw memberError;
 
+        const typedMemberRows =
+          (memberRows as { user_id: string; role_id: string | null }[] | null) ??
+          [];
         const studentIds = Array.from(
           new Set(
-            (memberRows ?? [])
+            typedMemberRows
               .filter((row) => row.role_id === studentRoleId)
               .map((row) => row.user_id)
           )

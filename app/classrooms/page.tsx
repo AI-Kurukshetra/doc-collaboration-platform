@@ -77,7 +77,9 @@ export default function ClassroomsPage() {
           fetchError = memberError;
         } else {
           const classroomIds =
-            memberRows?.map((row) => row.classroom_id) ?? [];
+            (memberRows as { classroom_id: string }[] | null)?.map(
+              (row) => row.classroom_id
+            ) ?? [];
           if (classroomIds.length) {
             const { data: classroomRows, error: classroomsError } = await supabase
               .from("classrooms")
